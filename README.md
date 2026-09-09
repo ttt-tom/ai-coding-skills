@@ -43,9 +43,22 @@ Adjust the path to where you cloned the repository. If your client supports skil
 **3. Start small.** One bug, one acceptance criterion, one handoff.<br>
 You do **not** need the Python index to use the workflow.
 
-### Already using Zed, Claude, Gemini, Antigravity or Cursor?
+### Install into your client (preview first)
 
-You can give the skill file to any assistant that can read local Markdown. Native skill discovery and rule-file formats vary by client; we do not claim a tested one-click installer for each product.
+```sh
+cd /path/to/your/project
+python /path/to/ai-coding-skills/install.py                       # preview only
+python /path/to/ai-coding-skills/install.py --client cursor --apply
+```
+
+The installer copies the skill to the directories each client documents and never
+overwrites or edits existing rules; when an `AGENTS.md`/`CLAUDE.md` already exists it
+prints a block for you to merge. Claude Code, Codex, Gemini CLI, Antigravity, Cursor,
+Copilot, Windsurf and Zed paths are **docs-verified, not runtime-tested**. Details,
+sources and known traps: [INSTALL.md](INSTALL.md).
+
+**Handing this to an AI?** Give it the link and say: *"Read INSTALL.md in
+https://github.com/ttt-tom/ai-coding-skills and run the installer preview for my client; do not apply until I approve."*
 
 Keep **team instructions** in Git and **private runtime data** out. The included [.gitignore](.gitignore) covers local settings, credentials and session/cache folders without excluding entire tool directories. Some local filenames are project conventions, not client defaults.
 
@@ -58,7 +71,8 @@ For a new project, merge the optional [AI/editor ignore snippet](skills/efficien
 | **One skill** | A shared working method across sessions and assistants |
 | **Four templates** | Project acceptance, working rules, code map and active handoff |
 | **Optional Python index** | Find definitions and candidate callers without importing your app |
-| **Offline tests** | Check packaging, freshness, query output and path handling |
+| **Preview-first installer** | Copies the skill into 8 clients' documented paths without touching existing rules |
+| **Offline tests** | Check packaging, freshness, query output, path handling and the installer |
 
 Templates live [inside the skill](skills/efficient-code-maintenance/templates). Existing issue trackers remain the source of truth—no duplicate project-management system.
 
@@ -127,7 +141,7 @@ CI runs on Ubuntu and Windows with Python 3.9 and 3.12. macOS is covered by loca
 **让 AI 少盲搜、多验证，下一次会话也能接着做。** 项目由 **[ttt-tom](https://github.com/ttt-tom)** 创建和维护。
 
 - 核心：一份技能＋四份模板，让需求、代码入口、验证证据和交接有据可查。
-- 使用：克隆仓库，让 AI 阅读技能的 `SKILL.md`；支持技能目录的客户端也可复制整个技能文件夹。
+- 使用：克隆仓库，让 AI 阅读技能的 `SKILL.md`；或运行 `python install.py` 预览后 `--apply`，安装到 Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot / Windsurf / Zed 的官方目录，不覆盖已有规则。路径经官方文档核对，未逐一实机验证，见 [INSTALL.md](INSTALL.md)。
 - 流程：**定位 → 离线复现 → 最小修改 → 验证 → 交接**。
 - Python 索引是可选助手；其他语言继续用 rg/LSP。不承诺未经实测的 token 节省。
 - README 和技能优先使用英文面向全球开发者；本节与立项书保留中文说明。

@@ -19,3 +19,6 @@ jobs:
       - run: python skills/efficient-code-maintenance/scripts/code_index.py check
       - run: python skills/efficient-code-maintenance/scripts/code_index.py query snapshot --callers --rebuild
       - run: python skills/efficient-code-maintenance/scripts/code_index.py query snapshot --callers --rebuild --json
+      - run: python install.py --root . --client all
+      - run: python install.py --root ${{ runner.temp }} --client all --apply --json
+      - run: python install.py --root ${{ runner.temp }} --client all --apply --json
