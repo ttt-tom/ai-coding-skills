@@ -1,54 +1,139 @@
-# AI Coding Skills
+<div align="center">
 
-面向 vibe coding 的轻量维护工作流：需求有验收、代码有入口、修改有测试、协作有交接。
-不需要向量数据库、在线服务或额外模型调用。规则跨语言；附带索引器仅解析 Python。
+# ✦ AI Coding Skills
 
-## 30 秒看懂
+### Less wandering. Clearer patches. Better handoffs.
 
-它帮助 AI 把「不停翻代码」变成「找到入口和调用方 → 复现一个问题 → 做一个小补丁 → 留下可继续的交接」。核心是技能与模板，索引器是可选助手，不是比 rg/LSP 更快的既定结论。
+A small, portable workflow for AI-assisted coding.<br>
+**By [ttt-tom](https://github.com/ttt-tom)** · Local-first · MIT licensed
 
-例如排查 `snapshot`：
-- Before：重复读取函数正文，再全仓搜索引用，下一次会话重新开始。
-- After：`query snapshot --callers --rebuild` 列出候选调用方位置，写一个失败测试，修复后把证据和下一步留在交接中。
+[![Offline checks](https://github.com/ttt-tom/ai-coding-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/ttt-tom/ai-coding-skills/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/optional%20index-Python%203.9%2B-3776AB.svg)](#optional-python-index)
 
-这是使用方式示例，不是已测得的性能提升。README/立项说明用中文方便维护者阅读，技能和模板刻意使用英文方便不同 AI 客户端复用。
+[Get started](#start-in-one-minute) · [中文说明](#中文一分钟了解) · [The skill](skills/efficient-code-maintenance/SKILL.md) · [Roadmap](PROJECT.md)
 
-## 使用
+</div>
 
-将 `skills/efficient-code-maintenance/` 作为技能目录提供给支持 SKILL.md 的 AI 客户端。
-不同客户端的技能安装路径不同，本项目不自动修改全局配置。也可直接让 AI 阅读其 SKILL.md。
+---
 
-新项目可说：
-> 阅读 skills/efficient-code-maintenance/SKILL.md，按我的需求立项，使用技能目录内的 templates 建立维护入口；不要覆盖已有文件，不要自动部署。
+Your AI keeps rereading the same files. The next session forgets what changed. A “fix” arrives without a test.
 
-已有项目可说：
-> 使用 efficient-code-maintenance，先定位并复现这个问题，然后提交最小修复和验证证据，不重扫无关代码。
+**Give it a repeatable way to work:**
 
-复制模板时把占位项替换成真实项目内容；已有 AGENTS.md 必须合并，不覆盖。
-维护需求只保留单一事实源；如果已有 issue tracker，PROJECT.md 只链接它。
+**Locate → Reproduce → Patch → Verify → Hand off**
 
-## Python 索引
+No vector database. No service to run. No API key for the tooling.<br>
+Keep your existing editor, agent and search tools.
+
+## Start in one minute
+
+**1. Get the skill.**
 
 ```sh
-python skills/efficient-code-maintenance/scripts/code_index.py build --root /path/to/repo
-python skills/efficient-code-maintenance/scripts/code_index.py check --root /path/to/repo
-python skills/efficient-code-maintenance/scripts/code_index.py query chat_completions --root /path/to/repo
-python skills/efficient-code-maintenance/scripts/code_index.py query snapshot --callers --rebuild --root /path/to/repo
+git clone https://github.com/ttt-tom/ai-coding-skills.git
+```
+
+**2. Give your AI this prompt.**
+
+> Read `ai-coding-skills/skills/efficient-code-maintenance/SKILL.md`. Apply it to my project: identify the relevant entry and callers, reproduce the issue offline, make the smallest coherent fix, and leave verified results plus the next step. Merge existing project rules; do not overwrite them.
+
+Adjust the path to where you cloned the repository. If your client supports skill folders, you can instead copy **the entire** `skills/efficient-code-maintenance/` directory into its documented skills location. Templates, script and license travel with it.
+
+**3. Start small.** One bug, one acceptance criterion, one handoff.<br>
+You do **not** need the Python index to use the workflow.
+
+### Already using Zed, Claude, Gemini, Antigravity or Cursor?
+
+You can give the skill file to any assistant that can read local Markdown. Native skill discovery and rule-file formats vary by client; we do not claim a tested one-click installer for each product.
+
+Keep **team instructions** in Git and **private runtime data** out. The included [.gitignore](.gitignore) covers local settings, credentials and session/cache folders without excluding entire tool directories. Some local filenames are project conventions, not client defaults.
+
+For a new project, merge the optional [AI/editor ignore snippet](skills/efficient-code-maintenance/templates/gitignore-ai.txt); review existing rules rather than replacing them. An ignore rule does not remove already-tracked secrets, and a shared settings file is not automatically safe to publish.
+
+## What you get
+
+| Piece | What it helps with |
+| --- | --- |
+| **One skill** | A shared working method across sessions and assistants |
+| **Four templates** | Project acceptance, working rules, code map and active handoff |
+| **Optional Python index** | Find definitions and candidate callers without importing your app |
+| **Offline tests** | Check packaging, freshness, query output and path handling |
+
+Templates live [inside the skill](skills/efficient-code-maintenance/templates). Existing issue trackers remain the source of truth—no duplicate project-management system.
+
+## A concrete example
+
+**Before:** “Fix this bug.” → repeated file scans → speculative patch → next session starts over.
+
+**With the workflow:**
+
+1. Ask “Who calls `snapshot`?”
+2. Read the relevant function and caller.
+3. Write a failing test; make it pass.
+4. Hand off: “Changed X. Test Y passed. Live behavior is not yet verified.”
+
+This illustrates the process, **not a measured speed or token-saving claim**.
+
+## Optional Python index
+
+Requires **Python 3.9+ and Git**. From this repository:
+
+```sh
+# Who calls snapshot? Refresh stale data before answering.
+python skills/efficient-code-maintenance/scripts/code_index.py query snapshot --callers --rebuild --root /path/to/project
+
+# Machine-readable results; narrow returned callers to one file.
+python skills/efficient-code-maintenance/scripts/code_index.py query snapshot --callers --file src/store.py --json --rebuild --root /path/to/project
+```
+
+Replace `/path/to/project` with your Git repository path; quote paths with spaces. On systems that use `python3`, substitute that command.
+
+<details>
+<summary><strong>Options, limits & privacy</strong></summary>
+
+- `build` writes a local index; `check` verifies freshness.
+- `query SYMBOL` prefers exact names, then substring matches.
+- `--callers` returns syntactic candidate callers, not a resolved call graph.
+- `--file PATH` filters **returned locations** by exact repository-relative path; it does not resolve which same-named method is called.
+- `--json` emits one object with `results`, `total`, `truncated` and `warning`. At most 20 matches are returned. Errors go to stderr with a nonzero exit.
+- `--rebuild` refreshes missing/stale indexes before queries. Without it, stale queries fail rather than return old locations.
+- Repeat `--exclude DIRECTORY` for project-specific directory names, using the same options on each command. Defaults skip hidden directories, vendor, node_modules and __pycache__.
+- Only **Git-tracked Python files** are indexed. Inspect untracked files directly; never stage unknown files just to index them.
+- No application imports, source bodies, default values or docstrings are stored. Names and paths can still reveal business structure: keep `.code-index/` local and add it to project ignores.
+- For other languages, use your existing **rg/LSP**. The workflow and templates are cross-language; this parser is not.
+- No auto-deployment, credential changes or paid requests. Tests passing is not production acceptance.
+
+</details>
+
+## Try it, measure it, keep what helps
+
+The baseline is **the same workflow with rg + LSP**, not “no tools.” We will compare locating time, refresh overhead, repeated reads, actual tokens when available and patch correctness across two real projects.
+
+If the index adds no consistent value, remove it. **The workflow and templates stand on their own.** See the [evaluation plan](PROJECT.md); benchmarks are not yet available.
+
+## Contribute
+
+Small, reproducible improvements are welcome. Open an issue with the task, expected behavior, actual behavior and a sanitized example—never upload keys or private source.
+
+```sh
 python -m unittest discover -s tests
 ```
 
-要求 Python 3.9+ 和 Git。Mac/Linux/Windows 可用同一 Python 脚本。
-只读 Git 跟踪的 .py 文件，不导入业务模块，不索引默认参数、正文、docstring。
-索引包含符号名和路径，仍可能泄露业务结构，应留在本地并忽略 `.code-index/`。
-默认排除 vendor、node_modules、__pycache__ 和隐藏目录。业务目录由重复的 `--exclude static --exclude private_media` 自行配置，每次调用使用相同选项。
-`query --rebuild` 自动刷新过期/缺失索引，未指定时保留严格检查；构建失败不使用旧数据。错误显示安全的文件名和行号，不输出源代码片段或 Git stderr。
-非 Python 使用 rg/LSP；不假装支持其 AST。反向查询是按调用名称的候选关系，可能包含同名误匹配与嵌套作用域调用。
-新未跟踪文件需直接检查；先确认无敏感信息再决定是否加入 Git。
+CI runs on Ubuntu and Windows with Python 3.9 and 3.12. macOS is covered by local testing.
 
-## 交付边界
+## 中文：一分钟了解
 
-索引不是完整调用图，测试通过不等于生产验收。没有可靠的实测 token 基线前，不承诺节省百分比。
-此仓库不包含任何业务凭证、账号、生产日志或 ai2api 业务源码。
-项目计划与验收见 PROJECT.md。
+**让 AI 少盲搜、多验证，下一次会话也能接着做。** 项目由 **[ttt-tom](https://github.com/ttt-tom)** 创建和维护。
 
-许可证：MIT，见 LICENSE。单独复制技能时，保留技能内的 LICENSE 即可。
+- 核心：一份技能＋四份模板，让需求、代码入口、验证证据和交接有据可查。
+- 使用：克隆仓库，让 AI 阅读技能的 `SKILL.md`；支持技能目录的客户端也可复制整个技能文件夹。
+- 流程：**定位 → 离线复现 → 最小修改 → 验证 → 交接**。
+- Python 索引是可选助手；其他语言继续用 rg/LSP。不承诺未经实测的 token 节省。
+- README 和技能优先使用英文面向全球开发者；本节与立项书保留中文说明。
+- MIT 开源，可复用和修改，请保留许可证中的版权声明。
+
+---
+
+Created and maintained by **[ttt-tom](https://github.com/ttt-tom)**.<br>
+[MIT License](LICENSE) · The standalone skill includes its own license copy.

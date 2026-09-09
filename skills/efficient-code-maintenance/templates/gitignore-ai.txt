@@ -1,3 +1,4 @@
+# Merge into the target .gitignore; do not overwrite existing project rules.
 .code-index/
 __pycache__/
 *.pyc

@@ -128,9 +128,13 @@ def main():
     parser.add_argument('symbol', nargs='?')
     parser.add_argument('--root', type=Path, default=Path.cwd())
     parser.add_argument('--callers', action='store_true', help='Find candidate callers instead of definitions')
+    parser.add_argument('--json', action='store_true', dest='as_json', help='Emit one JSON object on stdout; errors remain on stderr')
+    parser.add_argument('--file', metavar='PATH', help='Restrict query results to this exact repository-relative file')
     parser.add_argument('--exclude', action='append', default=[], metavar='DIRECTORY', help='Exclude a directory component; repeatable, pass consistently on each command')
     parser.add_argument('--rebuild', action='store_true', help='On query, rebuild missing or stale index before answering')
     args = parser.parse_args()
+    if args.file and args.action != 'query':
+        parser.error('--file requires query')
     root = args.root.resolve()
     try:
         if args.action == 'query' and not args.symbol:
@@ -142,15 +146,29 @@ def main():
                 raise
             data = build(root, args.exclude)
         if args.action == 'query':
-            if not args.symbol:
-                parser.error('query requires a symbol')
             matches = query(data, args.symbol, args.callers)
-            for item in matches[:20]:
-                print(f"{item['id']} [{item['start']}-{item['end']}]")
-                print('  candidate calls:', ', '.join(item['candidate_calls'][:12]))
-            print(f'{len(matches)} matches; showing at most 20; no runtime resolution implied')
+            if args.file:
+                matches = [s for s in matches if s['file'] == args.file]
+            warning = ('Broad name: many candidate callers. Use --file PATH to narrow results; '
+                       'class prefixes do not resolve bare-name ambiguity.') if args.callers and len(matches) > 20 else None
+            results = [{k: v for k, v in item.items() if not args.callers or k != 'candidate_calls'} for item in matches[:20]]
+            if args.as_json:
+                print(json.dumps(dict(schema_version=1, query=args.symbol,
+                    mode='callers' if args.callers else 'definitions', total=len(matches),
+                    truncated=len(matches) > 20, warning=warning, results=results), ensure_ascii=True))
+            else:
+                for item in results:
+                    print(f"{item['id']} [{item['start']}-{item['end']}]")
+                    if not args.callers:
+                        print('  candidate calls:', ', '.join(item['candidate_calls'][:12]))
+                print(f'{len(matches)} matches; showing at most 20; no runtime resolution implied')
+                if warning:
+                    print(warning)
         else:
-            print(f"OK: {len(data['hashes'])} files, {len(data['symbols'])} symbols")
+            if args.as_json:
+                print(json.dumps(dict(schema_version=1, status='ok', files=len(data['hashes']), symbols=len(data['symbols']))))
+            else:
+                print(f"OK: {len(data['hashes'])} files, {len(data['symbols'])} symbols")
     except subprocess.CalledProcessError:
         parser.exit(1, 'Git source enumeration failed; check repository root.\n')
     except json.JSONDecodeError:

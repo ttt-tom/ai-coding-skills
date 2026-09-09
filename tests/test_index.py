@@ -101,3 +101,55 @@ class IndexTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(copied / 'scripts/code_index.py'), 'query', 'snapshot', '--root', str(self.root), '--rebuild'], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('snapshot', result.stdout)
+
+    def cli(self, *args):
+        return subprocess.run([sys.executable, str(SCRIPT), *args, '--root', str(self.root)], capture_output=True, text=True)
+
+    def test_json_callers_filter_and_empty_output(self):
+        self.source('a.py', 'def snapshot(): pass\ndef caller(): snapshot()')
+        self.source('b.py', 'def another(): snapshot()')
+        result = self.cli('query', 'snapshot', '--callers', '--rebuild', '--json', '--file', 'b.py')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload['total'], 1)
+        self.assertFalse(payload['truncated'])
+        self.assertEqual(payload['results'][0]['name'], 'another')
+        self.assertNotIn('candidate_calls', payload['results'][0])
+        empty = json.loads(self.cli('query', 'absent', '--json').stdout)
+        self.assertEqual(empty['results'], [])
+        text = self.cli('query', 'snapshot', '--callers').stdout
+        self.assertNotIn('candidate calls:', text)
+
+    def test_json_truncation_warning(self):
+        self.source('a.py', '\n'.join(f'def c{i}(): obj.get()' for i in range(21)))
+        payload = json.loads(self.cli('query', 'get', '--callers', '--rebuild', '--json').stdout)
+        self.assertEqual(payload['total'], 21)
+        self.assertEqual(len(payload['results']), 20)
+        self.assertTrue(payload['truncated'])
+        self.assertIn('--file', payload['warning'])
+
+    def test_json_build_check_and_error_channels(self):
+        self.source('a.py', 'def f(): pass')
+        for action in ['build', 'check']:
+            self.assertEqual(json.loads(self.cli(action, '--json').stdout)['status'], 'ok')
+        (self.root / 'a.py').write_text('def broken(')
+        result = self.cli('query', 'f', '--rebuild', '--json')
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, '')
+        self.assertIn('a.py:1', result.stderr)
+
+    def test_ignore_snippet_excludes_private_data_not_shared_rules(self):
+        snippet = SCRIPT.parents[1] / 'templates/gitignore-ai.txt'
+        (self.root / '.gitignore').write_text(snippet.read_text(encoding='utf-8'), encoding='utf-8')
+        private = ['.env', '.env.production', '.claude/settings.local.json',
+                   '.claude/worktrees/session/file.py', '.gemini/oauth_creds.json',
+                   '.gemini/antigravity/brain/task/log.txt', '.antigravity/sessions/session.json',
+                   '.cursor/cache/state.json', '.zed/settings.local.json', '.codex/auth.json']
+        shared = ['.env.example', 'AGENTS.md', 'CLAUDE.md', 'GEMINI.md',
+                  '.claude/skills/demo/SKILL.md', '.gemini/skills/demo/SKILL.md',
+                  '.cursor/rules/maintenance.mdc', '.agent/rules/maintenance.md',
+                  '.agents/skills/demo/SKILL.md', '.zed/settings.json',
+                  '.github/copilot-instructions.md']
+        for path in private + shared:
+            result = subprocess.run(['git', 'check-ignore', '--no-index', '-q', '--', path], cwd=self.root)
+            self.assertEqual(result.returncode, 0 if path in private else 1, path)

@@ -1,6 +1,6 @@
 ---
 name: efficient-code-maintenance
-description: Establish reusable code-navigation, requirement acceptance, offline verification and handoff practices for a repository, or use them to perform a scoped maintenance task. Use when asked to improve AI coding workflow or maintain an existing project with less repeated exploration.
+description: Set up AGENTS.md and repository maintenance workflows, find who calls a function, or prepare an evidence-based handoff. Use for repository bug fixes that need navigation and isolated reproduction, or when asked to reduce repeated AI code exploration; lightweight edits need not adopt the full workflow.
 ---
 
 # Efficient Code Maintenance
@@ -11,6 +11,7 @@ Use the project's existing conventions and the user's requested scope. A review 
 
 When asked to set up the workflow, adapt the self-contained templates in `templates/` relative to this skill directory.
 Merge existing instructions instead of replacing them. Keep one requirement source of truth; link existing issue tracking instead of duplicating it. Define observable acceptance and non-goals, not a speculative architecture.
+When asked to configure ignores, review and merge `templates/gitignore-ai.txt`. Keep shared rules/skills tracked; exclude only applicable local runtime data. These are conservative examples, not an installer or a guarantee of all client storage paths. Review tracked files separately for secrets.
 
 ## Maintain a project
 
@@ -35,9 +36,11 @@ From this skill directory, run:
 ```sh
 python scripts/code_index.py query snapshot --root REPO --rebuild
 python scripts/code_index.py query snapshot --callers --root REPO --rebuild
+python scripts/code_index.py query snapshot --callers --file src/store.py --root REPO --rebuild --json
 ```
 
 `--rebuild` refreshes missing/stale data before answering. Add repeatable `--exclude DIRECTORY` on every command for project-specific exclusions. Exact matches take priority over substring matches.
+`--json` returns results, total count and truncation metadata without progress text on stdout. `--file` filters returned definition/caller locations; it does not resolve callee identity.
 The helper reads only tracked Python source and writes local `.code-index/symbols.json`.
 It never imports project modules. Add the output directory to project ignores with authorization.
 Do not add unknown files to Git solely to index them. Inspect untracked files directly.
