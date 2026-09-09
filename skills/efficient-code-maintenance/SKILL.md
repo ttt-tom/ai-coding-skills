@@ -9,10 +9,16 @@ Use the project's existing conventions and the user's requested scope. A review 
 
 ## Establish a project
 
-When asked to set up the workflow, adapt the repository-level templates in `../../templates/`.
+When asked to set up the workflow, adapt the self-contained templates in `templates/` relative to this skill directory.
 Merge existing instructions instead of replacing them. Keep one requirement source of truth; link existing issue tracking instead of duplicating it. Define observable acceptance and non-goals, not a speculative architecture.
 
 ## Maintain a project
+
+Use this sequence for non-trivial maintenance:
+1. Inspect `git status --short` and the current handoff. Output: task boundary and writer ownership.
+2. Locate the entry and callers with rg/LSP or the commands below. Output: one evidence-backed hypothesis with source locations.
+3. Reproduce offline, then patch. Output: failing-before/passing-after test evidence and a reviewable diff.
+4. Verify and hand off. Output: outcome, changed files, actual checks, unverified items and next step. See the filled example in `templates/ACTIVE_HANDOFF.md`.
 
 - Start with working-tree changes, project instructions, current handoff and code map if present. Inspect only what is needed; a trivial edit need not create planning documents.
 - State the specific question. Use symbol search/LSP or the bundled Python index to find entry, relevant caller, and output consumer. Read complete relevant functions; do not enforce an arbitrary file-count limit.
@@ -24,7 +30,14 @@ Merge existing instructions instead of replacing them. Keep one requirement sour
 
 ## Navigation helper
 
-Run `scripts/code_index.py build --root REPO`, then `query SYMBOL --root REPO`.
+From this skill directory, run:
+
+```sh
+python scripts/code_index.py query snapshot --root REPO --rebuild
+python scripts/code_index.py query snapshot --callers --root REPO --rebuild
+```
+
+`--rebuild` refreshes missing/stale data before answering. Add repeatable `--exclude DIRECTORY` on every command for project-specific exclusions. Exact matches take priority over substring matches.
 The helper reads only tracked Python source and writes local `.code-index/symbols.json`.
 It never imports project modules. Add the output directory to project ignores with authorization.
 Do not add unknown files to Git solely to index them. Inspect untracked files directly.

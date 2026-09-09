@@ -17,3 +17,4 @@ jobs:
       - run: python -m unittest discover -s tests
       - run: python skills/efficient-code-maintenance/scripts/code_index.py build
       - run: python skills/efficient-code-maintenance/scripts/code_index.py check
+      - run: python skills/efficient-code-maintenance/scripts/code_index.py query snapshot --callers --rebuild

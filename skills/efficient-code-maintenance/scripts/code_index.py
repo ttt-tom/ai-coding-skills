@@ -9,28 +9,28 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-VERSION = 1
-EXCLUDED = {'static', 'private_media', 'vendor', 'node_modules', '__pycache__'}
+VERSION = 2
+EXCLUDED = {'vendor', 'node_modules', '__pycache__'}
 
 
-def sources(root):
+def sources(root, exclude=()):
     result = subprocess.run(['git', 'ls-files', '-z', '--', '*.py'], cwd=root,
                             capture_output=True, check=True)
     names = sorted(set(os.fsdecode(p) for p in result.stdout.split(b'\0') if p))
     selected = []
     for name in names:
         path = Path(name)
-        if any(part.startswith('.') or part in EXCLUDED for part in path.parts):
-            continue
         full = root / path
         if path.is_absolute() or '..' in path.parts or full.resolve() != full.absolute():
             raise ValueError('Unsafe source path')
+        if any(part.startswith('.') or part in EXCLUDED or part in exclude for part in path.parts):
+            continue
         selected.append(name)
     return selected
 
 
-def snapshot(root):
-    return {name: (root / name).read_bytes() for name in sources(root)}
+def snapshot(root, exclude=()):
+    return {name: (root / name).read_bytes() for name in sources(root, exclude)}
 
 
 def hashes(contents):
@@ -69,8 +69,8 @@ class Visitor(ast.NodeVisitor):
         self.scope.pop()
 
 
-def build(root):
-    contents = snapshot(root)
+def build(root, exclude=()):
+    contents = snapshot(root, exclude)
     symbols = []
     for name, raw in contents.items():
         try:
@@ -80,7 +80,12 @@ def build(root):
         visitor = Visitor(name)
         visitor.visit(tree)
         symbols.extend(visitor.items)
-    data = dict(version=VERSION, hashes=hashes(contents), symbols=symbols)
+    callers = {}
+    for symbol in symbols:
+        for callee in symbol['candidate_calls']:
+            callers.setdefault(callee, []).append(symbol['id'])
+    data = dict(version=VERSION, hashes=hashes(contents), symbols=symbols,
+                callers=callers, exclude=sorted(set(exclude)))
     folder = root / '.code-index'
     if folder.is_symlink():
         raise ValueError('Index directory must not be a symlink')
@@ -100,11 +105,21 @@ def build(root):
     return data
 
 
-def load_fresh(root):
+def load_fresh(root, exclude=()):
     data = json.loads((root / '.code-index/symbols.json').read_text(encoding='utf-8'))
-    if data.get('version') != VERSION or data.get('hashes') != hashes(snapshot(root)):
+    if data.get('version') != VERSION or data.get('exclude') != sorted(set(exclude)) or data.get('hashes') != hashes(snapshot(root, exclude)):
         raise ValueError('Index stale; run build before query')
     return data
+
+
+def query(data, name, callers=False):
+    exact = [s for s in data['symbols'] if name in (s['id'], s['name'], s['name'].rsplit('.', 1)[-1])]
+    matches = exact or [s for s in data['symbols'] if name in s['name']]
+    if not callers:
+        return matches
+    names = {s['name'].rsplit('.', 1)[-1] for s in matches} or {name}
+    ids = {caller for key in names for caller in data['callers'].get(key, [])}
+    return [s for s in data['symbols'] if s['id'] in ids]
 
 
 def main():
@@ -112,23 +127,38 @@ def main():
     parser.add_argument('action', choices=['build', 'check', 'query'])
     parser.add_argument('symbol', nargs='?')
     parser.add_argument('--root', type=Path, default=Path.cwd())
+    parser.add_argument('--callers', action='store_true', help='Find candidate callers instead of definitions')
+    parser.add_argument('--exclude', action='append', default=[], metavar='DIRECTORY', help='Exclude a directory component; repeatable, pass consistently on each command')
+    parser.add_argument('--rebuild', action='store_true', help='On query, rebuild missing or stale index before answering')
     args = parser.parse_args()
     root = args.root.resolve()
     try:
-        data = build(root) if args.action == 'build' else load_fresh(root)
+        if args.action == 'query' and not args.symbol:
+            parser.error('query requires a symbol')
+        try:
+            data = build(root, args.exclude) if args.action == 'build' else load_fresh(root, args.exclude)
+        except (FileNotFoundError, ValueError):
+            if args.action != 'query' or not args.rebuild:
+                raise
+            data = build(root, args.exclude)
         if args.action == 'query':
             if not args.symbol:
                 parser.error('query requires a symbol')
-            matches = [s for s in data['symbols'] if args.symbol in s['name'] or args.symbol == s['id']]
+            matches = query(data, args.symbol, args.callers)
             for item in matches[:20]:
                 print(f"{item['id']} [{item['start']}-{item['end']}]")
                 print('  candidate calls:', ', '.join(item['candidate_calls'][:12]))
             print(f'{len(matches)} matches; showing at most 20; no runtime resolution implied')
         else:
             print(f"OK: {len(data['hashes'])} files, {len(data['symbols'])} symbols")
-    except (OSError, ValueError, subprocess.CalledProcessError):
-        # Avoid exposing malformed source snippets or Git diagnostics.
-        parser.exit(1, 'Index operation failed: check Git root, source syntax and freshness; rebuild if stale.\n')
+    except subprocess.CalledProcessError:
+        parser.exit(1, 'Git source enumeration failed; check repository root.\n')
+    except json.JSONDecodeError:
+        parser.exit(1, 'Invalid index JSON; rebuild required.\n')
+    except ValueError as exc:
+        parser.exit(1, str(exc) + '\n')
+    except OSError as exc:
+        parser.exit(1, f'Filesystem error: {exc.strerror}; path={exc.filename}\n')
 
 
 if __name__ == '__main__':
