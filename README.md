@@ -76,6 +76,16 @@ For a new project, merge the optional [AI/editor ignore snippet](skills/efficien
 
 Templates live [inside the skill](skills/efficient-code-maintenance/templates). Existing issue trackers remain the source of truth—no duplicate project-management system.
 
+## What belongs in Git?
+
+Keep this public repository generic. Each project owns its own reviewed `AGENTS.md`/client instructions, short `CODEMAP.md`, maintained troubleshooting KB, API contracts, tests and active handoff. Before committing project knowledge, remove credentials, customer data, raw logs and machine-specific paths; label operational claims with the evidence scope and verification date. A private project stays private even when it uses this public skill.
+
+Keep **generated** indexes separate from that curated knowledge. This repository tracks the indexer and its tests; consuming projects rebuild `.code-index/symbols.json` locally from their current Git-tracked sources with `query --rebuild` or `build` + `check`. Do not treat an old index as evidence, stage unknown source files merely to index them, or commit every regenerated index. A team may intentionally publish a release snapshot after reviewing its contents and size; that is a project decision, not this skill's default.
+
+For a large codebase, first record the existing test baseline. Refactor one boundary at a time—such as authentication, routing or task state—with contract tests and a rollback path. Report pre-existing failures separately from regressions introduced by the change; neither a smaller file nor a green syntax check proves production behavior.
+
+This workflow complements [Superpowers](https://github.com/obra/superpowers): use its design approval, test-first and verification disciplines when that plugin is available, while this skill provides portable project navigation and handoff. Install Superpowers separately where supported, following its official instructions; it is not bundled or required here. [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) is an optional structural-search experiment, not a prerequisite: compare it with this index plus rg/LSP on real tasks before claiming token savings or committing its generated graph.
+
 ## A concrete example
 
 **Before:** “Fix this bug.” → repeated file scans → speculative patch → next session starts over.
@@ -144,6 +154,7 @@ CI runs on Ubuntu and Windows with Python 3.9 and 3.12. macOS is covered by loca
 - 使用：克隆仓库，让 AI 阅读技能的 `SKILL.md`；或运行 `python install.py` 预览后 `--apply`，安装到 Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot / Windsurf / Zed 的官方目录，不覆盖已有规则。路径经官方文档核对，未逐一实机验证，见 [INSTALL.md](INSTALL.md)。
 - 流程：**定位 → 离线复现 → 最小修改 → 验证 → 交接**。
 - Python 索引是可选助手；其他语言继续用 rg/LSP。不承诺未经实测的 token 节省。
+- 各项目把脱敏 KB、代码地图和测试证据放在自己的 Git；生成索引按当前源码本地重建。先固定失败基线，再按边界小步重构；支持 Superpowers 的客户端按官方文档单独安装，本技能不复制第三方插件。
 - README 和技能优先使用英文面向全球开发者；本节与立项书保留中文说明。
 - MIT 开源，可复用和修改，请保留许可证中的版权声明。
 
