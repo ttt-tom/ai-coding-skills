@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-19",
+  "runtime_version": "2.1.299",
+  "peer_protocol": 1,
+  "isolated_tests": {
+    "count": 17,
+    "passed": 17,
+    "author_written": true
+  },
+  "independent_review": {
+    "completed": true,
+    "reproduced_findings_fixed": [
+      "image-only interleaving",
+      "new inbound permission drift",
+      "partial transcript tail",
+      "per-native-session pending request",
+      "cached target after alias rebind"
+    ],
+    "narrow_recheck_passed": true
+  },
+  "mcp_sdk_handshake": true,
+  "mcp_tools_discovered": 5,
+  "native_peer_pid_verified": true,
+  "real_same_app_task_test": {
+    "request_id": "headless-smoke-20261019-01",
+    "sent_at": "2026-10-19T03:25:21.471170+00:00",
+    "completed_at": "2026-10-19T03:25:32.562838+00:00",
+    "status": "completed",
+    "actual_model": "claude-fable-5-1",
+    "actual_permission_mode": "plan",
+    "native_task_binding_verified": true,
+    "incoming_uuid_count": 1,
+    "reply_tool_calls": 0,
+    "expected_echo_observed": true,
+    "same_id_retry_did_not_resend": true
+  },
+  "lock_screen_test": {
+    "screen_locked_before_send": false,
+    "screen_locked_at_read": false,
+    "verified": false,
+    "status": "NOT_RUN_LOCKED",
+    "reason": "Mac remained unlocked during the bounded observation; no lock/unlock command was performed."
+  },
+  "codex_registration": {
+    "enabled": true,
+    "transport": "stdio",
+    "server": "claude_app_headless",
+    "preexisting_12_mcp_names_and_command_types_preserved": true,
+    "whole_config_preservation": "The initial before/after full-config equality assertion did not match. No complete pre-change value snapshot was retained; unrelated normalization/concurrent changes are not established. Do not claim whole-config equality.",
+    "current_chat_tool_registry": "not yet loaded; command and SDK work now"
+  },
+  "skill_validation": {
+    "new_skill": "valid",
+    "existing_fable_skill": "valid",
+    "validator_dependency": "PyYAML supplied by isolated uv tool environment; bridge runtime itself uses only Python standard library"
+  },
+  "files_sha256": {
+    "SKILL.md": "b395cdcbc8adf3fcc3458ad0af6e1982dfb660fe1ed39397ac8de520a8519bb9",
+    "scripts/claude_app_headless.py": "0e90871230b07d6a835c60bceaac6bf8ff2204278d3189453150b760df768a91",
+    "scripts/test_claude_app_headless.py": "e023aeeb42e790f0955c193fc2a73a4c6bba194283f6fe46a0e0b0db3b07617d"
+  }
+}

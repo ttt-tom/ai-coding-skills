@@ -22,3 +22,17 @@ jobs:
       - run: python install.py --root . --client all
       - run: python install.py --root ${{ runner.temp }} --client all --apply --json
       - run: python install.py --root ${{ runner.temp }} --client all --apply --json
+
+  bridge:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python skills/claude-app-headless/scripts/test_claude_app_headless.py
+      - run: python skills/claude-app-headless/scripts/install_codex.py --skills-dir ${{ runner.temp }}/s --bin-dir ${{ runner.temp }}/b --codex-config ${{ runner.temp }}/c/config.toml --apply
+      - run: ${{ runner.temp }}/b/codex-claude-app --help
