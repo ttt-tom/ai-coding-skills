@@ -64,6 +64,12 @@ Keep **team instructions** in Git and **private runtime data** out. The included
 
 For a new project, merge the optional [AI/editor ignore snippet](skills/efficient-code-maintenance/templates/gitignore-ai.txt); review existing rules rather than replacing them. An ignore rule does not remove already-tracked secrets, and a shared settings file is not automatically safe to publish.
 
+## Codex ↔ Claude App bridge
+
+Second skill in this repo: let Codex message an **existing** Claude Desktop task and read the verified reply, without screen control.
+New machine: clone, run `skills/claude-app-headless/scripts/install_codex.py` (preview), then `--apply`.
+macOS only, pinned to Claude Desktop's bundled Code 2.1.299. Details and limits: [CODEX-CLAUDE-APP.md](CODEX-CLAUDE-APP.md).
+
 ## What you get
 
 | Piece | What it helps with |
@@ -156,6 +162,7 @@ CI runs on Ubuntu and Windows with Python 3.9 and 3.12. macOS is covered by loca
 - Python 索引是可选助手；其他语言继续用 rg/LSP。不承诺未经实测的 token 节省。
 - 各项目把脱敏 KB、代码地图和测试证据放在自己的 Git；生成索引按当前源码本地重建。先固定失败基线，再按边界小步重构；支持 Superpowers 的客户端按官方文档单独安装，本技能不复制第三方插件。
 - README 和技能优先使用英文面向全球开发者；本节与立项书保留中文说明。
+- 第二个技能：Codex 通过 Claude 原生会话 socket 与已有的 Claude App 任务通讯，无需屏幕控制。换机器运行 `skills/claude-app-headless/scripts/install_codex.py` 预览后 `--apply`。仅限 macOS，锁屏往返尚未验证，见 [CODEX-CLAUDE-APP.md](CODEX-CLAUDE-APP.md)。
 - MIT 开源，可复用和修改，请保留许可证中的版权声明。
 
 ---

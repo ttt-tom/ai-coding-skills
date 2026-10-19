@@ -1,0 +1,11 @@
+interface:
+  display_name: "Claude App 无屏幕通信"
+  short_description: "Use existing Claude App tasks without screen control"
+  default_prompt: "Use $claude-app-headless to communicate with my existing Claude App task and verify its reply."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "claude_app_headless"
+      description: "Local stdio bridge to a bound Claude Desktop Code task"
+policy:
+  allow_implicit_invocation: true
