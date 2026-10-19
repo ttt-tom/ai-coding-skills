@@ -57,8 +57,9 @@ class CodexBridgeInstallTests(unittest.TestCase):
         self.assertEqual(server['command'], self.python)
         self.assertEqual(server['args'], [str(skill / 'scripts/claude_app_headless.py'), 'mcp'])
         wrapper = self.home / '.local/bin/codex-claude-app'
-        self.assertTrue(wrapper.stat().st_mode & 0o111)
-        if sys.platform != 'win32':
+        self.assertTrue(wrapper.is_file())
+        if sys.platform != 'win32':  # no executable bit on Windows; the bridge is macOS-only
+            self.assertTrue(wrapper.stat().st_mode & 0o111)
             help_text = subprocess.run([str(wrapper), '--help'], capture_output=True, text=True, timeout=30)
             self.assertEqual(help_text.returncode, 0, help_text.stderr)
             self.assertIn('bind', help_text.stdout)
